@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import ToolCard from '../components/ToolCard.astro';
+import { tools } from '../tools/registry';
+---
+
+<Base
+  title="Outils gratuits en ligne, sans envoi de fichier"
+  description="Petits outils gratuits pour vos images, PDF et documents. Tout fonctionne dans votre navigateur : aucun fichier envoyé, aucun compte, aucune publicité."
+  path="/"
+>
+  <section class="hero">
+    <h1>Des petits outils qui gardent vos fichiers chez vous</h1>
+    <p class="lead">Convertir, signer, protéger, transformer. Gratuit, sans compte, sans publicité, et rien ne quitte votre appareil.</p>
+  </section>
+  <ul class="cards">
+    {tools.map((tool) => <li><ToolCard tool={tool} /></li>)}
+  </ul>
+</Base>

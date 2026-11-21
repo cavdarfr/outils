@@ -1,0 +1,13 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  X-Frame-Options: DENY
+
+# Politique appliquée aux Web Workers (le document reçoit la sienne par balise meta générée par Astro).
+/_astro/*
+  Content-Security-Policy: default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self'; img-src 'self' blob: data:
+  Cache-Control: public, max-age=31536000, immutable
+
+https://:worker.:subdomain.workers.dev/*
+  X-Robots-Tag: noindex

@@ -1,0 +1,21 @@
+---
+import Base from './Base.astro';
+import PrivacyNote from '../components/PrivacyNote.astro';
+import { getTool } from '../tools/registry';
+
+interface Props {
+  slug: string;
+}
+const tool = getTool(Astro.props.slug);
+---
+
+<Base title={tool.seoTitle} description={tool.description} path={`/${tool.slug}`}>
+  <nav class="crumbs" aria-label="Fil d'Ariane"><a href="/">Tous les outils</a></nav>
+  <h1>{tool.title}</h1>
+  <p class="lead">{tool.description}</p>
+  <PrivacyNote />
+  <slot />
+  <section class="help">
+    <slot name="help" />
+  </section>
+</Base>

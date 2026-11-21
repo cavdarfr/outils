@@ -1,0 +1,16 @@
+---
+import type { ToolMeta } from '../tools/types';
+import { CATEGORY_LABELS } from '../tools/types';
+
+interface Props {
+  tool: ToolMeta;
+}
+const { tool } = Astro.props;
+---
+
+<a class="card" href={`/${tool.slug}`}>
+  <span class="card-category">{CATEGORY_LABELS[tool.category]}</span>
+  <span class="card-title">{tool.title}</span>
+  <span class="card-description">{tool.description}</span>
+  {tool.status === 'draft' && <span class="card-draft">Brouillon</span>}
+</a>

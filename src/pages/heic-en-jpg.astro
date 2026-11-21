@@ -1,0 +1,27 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import Tool from '../tools/heic-en-jpg/Tool';
+---
+
+<ToolLayout slug="heic-en-jpg">
+  <Tool client:load />
+  <Fragment slot="help">
+    <h2>Comment ça marche</h2>
+    <ol>
+      <li>Déposez une ou plusieurs photos (HEIC d'iPhone, WebP, AVIF, PNG ou JPG).</li>
+      <li>Choisissez JPG ou PNG, la qualité et, si besoin, une taille maximale.</li>
+      <li>Téléchargez chaque image, ou toutes d'un coup dans un fichier ZIP.</li>
+    </ol>
+    <h2>Questions fréquentes</h2>
+    <h3>Mes photos sont-elles envoyées sur un serveur ?</h3>
+    <p>Non. La conversion se fait dans votre navigateur. Aucune requête ne transporte vos images : la politique de sécurité du site interdit toute connexion vers un autre domaine, et le code est public.</p>
+    <h3>Les informations GPS sont-elles conservées ?</h3>
+    <p>Non. L'image est redessinée puis enregistrée à nouveau : les métadonnées EXIF, dont la position GPS et le modèle d'appareil, disparaissent. L'orientation de la photo est appliquée avant.</p>
+    <h3>Pourquoi mon iPhone enregistre-t-il en HEIC ?</h3>
+    <p>Le HEIC prend environ deux fois moins de place qu'un JPG à qualité égale, mais beaucoup de sites et d'administrations ne l'acceptent pas. Pour ne plus en produire : Réglages, Appareil photo, Formats, « Le plus compatible ».</p>
+    <h3>JPG ou PNG ?</h3>
+    <p>JPG pour les photos : fichiers plus légers, accepté partout. PNG pour les captures d'écran, les logos ou les images avec transparence.</p>
+    <h3>Ça ne marche pas sur une très grande image</h3>
+    <p>Les téléphones limitent la mémoire disponible par onglet. Choisissez « 2048 px max » ou utilisez un ordinateur pour les images de plus de 50 mégapixels.</p>
+  </Fragment>
+</ToolLayout>

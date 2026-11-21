@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+
+const libs = [
+  { name: 'libheif (via libheif-js)', license: 'LGPL-3.0', url: 'https://github.com/strukturag/libheif', use: 'Décodage HEIC quand le navigateur ne le fait pas lui-même' },
+  { name: 'fflate', license: 'MIT', url: 'https://github.com/101arrowz/fflate', use: 'Création des archives ZIP' },
+  { name: 'Preact', license: 'MIT', url: 'https://github.com/preactjs/preact', use: 'Interface des outils' },
+  { name: 'Astro', license: 'MIT', url: 'https://github.com/withastro/astro', use: 'Génération du site' },
+];
+---
+
+<Base title="Licences" description="Licence du site et des bibliothèques utilisées." path="/licences">
+  <h1>Licences</h1>
+  <p>Le code du site est publié sous licence MIT sur <a href="https://github.com/cavdarfr/outils">GitHub</a>.</p>
+  <h2>Bibliothèques tierces</h2>
+  <ul>
+    {libs.map((l) => <li><a href={l.url}>{l.name}</a> — {l.license}. {l.use}.</li>)}
+  </ul>
+  <p>libheif est distribuée sous LGPL-3.0 et servie sans modification, dans un fichier séparé que vous pouvez remplacer. Son code source est disponible à l'adresse ci-dessus.</p>
+</Base>
