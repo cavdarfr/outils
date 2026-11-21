@@ -11,3 +11,7 @@
 
 https://:worker.:subdomain.workers.dev/*
   X-Robots-Tag: noindex
+
+# Bibliothèques tierces servies sans modification, chemin versionné.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable

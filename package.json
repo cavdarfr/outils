@@ -3,13 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev --port ${PORT:-4321}",
-    "build": "astro build",
+    "dev": "pnpm vendor && astro dev --port ${PORT:-4321}",
+    "build": "pnpm vendor && astro build",
     "preview": "astro preview --port ${PORT:-4321}",
     "typecheck": "astro check",
     "test": "vitest run",
-    "check": "astro check && vitest run && astro build",
-    "e2e": "playwright test"
+    "check": "astro check && vitest run && pnpm build",
+    "e2e": "playwright test",
+    "vendor": "node scripts/copy-vendor.mjs"
   },
   "dependencies": {
     "@astrojs/preact": "^6.1.6",

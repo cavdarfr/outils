@@ -68,3 +68,30 @@ test("signale un fichier qui n'est pas une image", async ({ page }) => {
   await expect(item).toHaveAttribute('data-status', 'erreur', { timeout: 15_000 });
   await expect(item.locator('.file-detail')).toContainText('Format non reconnu');
 });
+
+test("la file reprend après l'échec d'un envoi au worker", async ({ page }) => {
+  // Le premier envoi au worker échoue ; le fichier suivant doit quand même être converti.
+  await page.addInitScript(() => {
+    const original = Worker.prototype.postMessage;
+    let calls = 0;
+    Worker.prototype.postMessage = function (this: Worker, ...args: Parameters<Worker['postMessage']>) {
+      calls++;
+      if (calls === 1) throw new DOMException('échec simulé', 'DataCloneError');
+      return original.apply(this, args);
+    } as Worker['postMessage'];
+  });
+  await gotoTool(page, '/heic-en-jpg');
+  await page.getByTestId('file-input').setInputFiles([PNG, HEIC]);
+  await expect(page.locator('.file').nth(0)).toHaveAttribute('data-status', 'erreur', { timeout: 15_000 });
+  await expect(page.locator('.file').nth(1)).toHaveAttribute('data-status', 'ok', { timeout: 30_000 });
+});
+
+test('libheif est servi sans modification', async ({ request }) => {
+  const { readFile } = await import('node:fs/promises');
+  const { LIBHEIF_URL } = await import('../src/tools/heic-en-jpg/vendor');
+  const served = Buffer.from(await (await request.get(LIBHEIF_URL)).body());
+  const original = await readFile('node_modules/libheif-js/libheif-wasm/libheif-bundle.mjs');
+  expect(served.equals(original)).toBe(true);
+  const license = await (await request.get(LIBHEIF_URL.replace('libheif-bundle.mjs', 'LICENSE.txt'))).text();
+  expect(license).toContain('GNU LESSER GENERAL PUBLIC LICENSE');
+});

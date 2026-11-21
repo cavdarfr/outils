@@ -79,14 +79,17 @@ export default function Tool() {
         resolve();
         return;
       }
-      let timer: ReturnType<typeof setTimeout>;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let settled = false;
       const finish = (patch: Partial<Item>, broken = false) => {
+        if (settled) return;
+        settled = true;
         clearTimeout(timer);
         worker.removeEventListener('message', onMessage);
         worker.removeEventListener('error', onError);
         worker.removeEventListener('messageerror', onError);
         // Un worker planté ou bloqué est remplacé : les fichiers suivants repartent d'un état propre.
-        if (broken) resetWorker();
+        if (broken && workerRef.current === worker) resetWorker();
         update(item.id, patch);
         resolve();
       };
@@ -119,7 +122,11 @@ export default function Tool() {
       worker.addEventListener('error', onError);
       worker.addEventListener('messageerror', onError);
       const request: ConvertRequest = { id: item.id, file: item.file, ...opts };
-      worker.postMessage(request);
+      try {
+        worker.postMessage(request);
+      } catch {
+        finish({ status: 'erreur', detail: "Impossible de transmettre ce fichier au module de conversion." }, true);
+      }
     });
   }
 

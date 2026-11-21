@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import { MIME, fitWithin, isHeif, type OutputFormat } from './logic';
+import { LIBHEIF_URL } from './vendor';
 
 export interface ConvertRequest {
   id: number;
@@ -25,11 +26,13 @@ type Libheif = {
   };
 };
 
+type LibheifFactory = (options?: { onRuntimeInitialized?: () => void }) => unknown;
+
 let libheifPromise: Promise<Libheif> | null = null;
 
 /** Charge libheif (WASM, environ 2 Mo) uniquement si le navigateur ne sait pas décoder le HEIC. */
 function loadLibheif(): Promise<Libheif> {
-  libheifPromise ??= import('libheif-js/libheif-wasm/libheif-bundle.mjs').then(async ({ default: factory }) => {
+  libheifPromise ??= (import(/* @vite-ignore */ LIBHEIF_URL) as Promise<{ default: LibheifFactory }>).then(async ({ default: factory }) => {
     // Le rappel peut être appelé pendant l'appel à factory (WASM embarqué, instanciation synchrone).
     let lib: unknown;
     await new Promise<void>((resolve) => {

@@ -1,8 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
+import { LIBHEIF_URL, LIBHEIF_VERSION } from '../tools/heic-en-jpg/vendor';
 
 const libs = [
-  { name: 'libheif (via libheif-js)', license: 'LGPL-3.0', url: 'https://github.com/strukturag/libheif', use: 'Décodage HEIC quand le navigateur ne le fait pas lui-même' },
+  { name: 'libheif', license: 'LGPL-3.0', url: 'https://github.com/strukturag/libheif', use: 'Décodage HEIC quand le navigateur ne le fait pas lui-même' },
+  { name: 'libheif-js', license: 'LGPL-3.0', url: 'https://github.com/catdad-experiments/libheif-js', use: 'Compilation de libheif pour le navigateur' },
   { name: 'fflate', license: 'MIT', url: 'https://github.com/101arrowz/fflate', use: 'Création des archives ZIP' },
   { name: 'Preact', license: 'MIT', url: 'https://github.com/preactjs/preact', use: 'Interface des outils' },
   { name: 'Astro', license: 'MIT', url: 'https://github.com/withastro/astro', use: 'Génération du site' },
@@ -16,5 +18,7 @@ const libs = [
   <ul>
     {libs.map((l) => <li><a href={l.url}>{l.name}</a> — {l.license}. {l.use}.</li>)}
   </ul>
-  <p>libheif est distribuée sous licence LGPL-3.0. Le site utilise le paquet libheif-js (version 1.23.5), servi dans un fichier JavaScript distinct qui n'est chargé que si votre navigateur ne sait pas lire le HEIC. Le code source de libheif et de libheif-js est disponible aux adresses ci-dessus.</p>
+  <p>
+    libheif et libheif-js sont distribuées sous licence LGPL-3.0. Le site sert le fichier <code>libheif-bundle.mjs</code> du paquet npm libheif-js {LIBHEIF_VERSION} sans aucune modification, à une adresse fixe (<a href={LIBHEIF_URL}>{LIBHEIF_URL}</a>), avec <a href={LIBHEIF_URL.replace('libheif-bundle.mjs', 'LICENSE.txt')}>le texte de sa licence</a>. Il n'est chargé que si votre navigateur ne sait pas lire le HEIC. Le code source de ces bibliothèques est disponible aux adresses ci-dessus.
+  </p>
 </Base>
