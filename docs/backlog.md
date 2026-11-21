@@ -4,7 +4,7 @@ Plan complet : voir `PLAN.md` hors dépôt (revue du 2026-11-20). Statuts : idé
 
 | Outil | Phase | Statut |
 | --- | --- | --- |
-| HEIC/WebP/AVIF → JPG/PNG | 0 | en cours |
+| HEIC/WebP/AVIF → JPG/PNG | 0 | en ligne |
 | Filigrane de document (lot, PDF multipages, suppression EXIF) | 1 | prévu |
 | PDF : fusion, découpe, rotation, réordonnancement | 1 | prévu |
 | Emoji animés Slack/Discord | 1 | prévu |

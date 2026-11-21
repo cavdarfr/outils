@@ -1,9 +1,9 @@
 /// <reference lib="webworker" />
 import { MIME, fitWithin, isHeif, type OutputFormat } from './logic';
 import { LIBHEIF_URL } from './vendor';
+import { serveJobs } from '../../lib/job-host';
 
-export interface ConvertRequest {
-  id: number;
+export interface ConvertPayload {
   file: File;
   format: OutputFormat;
   quality: number;
@@ -11,9 +11,12 @@ export interface ConvertRequest {
   pixelBudget: number;
 }
 
-export type ConvertResponse =
-  | { id: number; ok: true; blob: Blob; width: number; height: number; decoder: 'natif' | 'libheif' }
-  | { id: number; ok: false; error: string };
+export interface ConvertResult {
+  blob: Blob;
+  width: number;
+  height: number;
+  decoder: 'natif' | 'libheif';
+}
 
 type Libheif = {
   HeifDecoder: new () => {
@@ -77,7 +80,7 @@ async function decode(file: File, budget: number): Promise<{ bitmap: ImageBitmap
   }
 }
 
-async function convert(req: ConvertRequest): Promise<ConvertResponse> {
+async function convert(req: ConvertPayload): Promise<ConvertResult> {
   const { bitmap, decoder } = await decode(req.file, req.pixelBudget);
   try {
     // Le décodage natif a déjà eu lieu ; ce contrôle évite au moins d'allouer en plus le canvas de sortie.
@@ -94,19 +97,10 @@ async function convert(req: ConvertRequest): Promise<ConvertResponse> {
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(bitmap, 0, 0, size.width, size.height);
     const blob = await canvas.convertToBlob({ type: MIME[req.format], quality: req.quality });
-    return { id: req.id, ok: true, blob, width: size.width, height: size.height, decoder };
+    return { blob, width: size.width, height: size.height, decoder };
   } finally {
     bitmap.close();
   }
 }
 
-self.onmessage = async (event: MessageEvent<ConvertRequest>) => {
-  const req = event.data;
-  let response: ConvertResponse;
-  try {
-    response = await convert(req);
-  } catch (error) {
-    response = { id: req.id, ok: false, error: error instanceof Error ? error.message : String(error) };
-  }
-  self.postMessage(response);
-};
+serveJobs(convert);

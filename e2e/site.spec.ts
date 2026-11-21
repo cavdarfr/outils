@@ -1,15 +1,19 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-const pages = ['/', '/heic-en-jpg', '/mentions-legales', '/confidentialite', '/licences'];
-
-for (const path of pages) {
-  test(`accessibilité ${path}`, async ({ page }) => {
-    await page.goto(path);
+// Toutes les pages publiées, d'après le sitemap : un nouvel outil est contrôlé sans modifier ce fichier.
+test('accessibilité de toutes les pages du sitemap', async ({ page, request, baseURL }) => {
+  const sitemap = await (await request.get('/sitemap.xml')).text();
+  const paths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]!).pathname);
+  expect(paths.length).toBeGreaterThan(4);
+  for (const path of paths) {
+    const response = await page.goto(new URL(path, baseURL).href);
+    expect(response?.status(), path).toBe(200);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', new URL(path, 'https://outils.cavdar.dev').href);
     const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
-  });
-}
+    expect(results.violations.map((v) => `${path} ${v.id}: ${v.help}`)).toEqual([]);
+  }
+});
 
 test("l'accueil liste les outils", async ({ page }) => {
   await page.goto('/');

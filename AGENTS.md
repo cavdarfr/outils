@@ -7,6 +7,8 @@ Site statique de petits outils qui traitent les fichiers dans le navigateur. Rie
 - `pnpm dev` : serveur de développement (port `PORT`, 4321 par défaut).
 - `pnpm check` : vérification des types, tests unitaires, build. Doit passer avant toute PR.
 - `pnpm e2e` : tests Playwright sur le site construit, servi par `wrangler dev` comme en production (port `E2E_PORT`, 8788 par défaut). Lancer `pnpm build` avant.
+- `pnpm e2e:prod` : mêmes tests sur https://outils.cavdar.dev (Chromium et iPhone émulé). `E2E_BASE_URL` permet de viser une autre adresse.
+- `pnpm new-tool <slug> "<Titre>" <images|pdf|documents|social|pratique>` : crée le squelette complet d'un outil en brouillon.
 - `node scripts/make-fixtures.mjs` : régénère les images d'exemple synthétiques (macOS, `sips`).
 - `node scripts/shots.mjs <url> <dossier>` : captures de contrôle visuel et `public/og.png`.
 - `scripts/trafic.sh [jours]` : pages vues par chemin et référents (jeton `CLOUDFLARE_ANALYTICS_TOKEN`).
@@ -22,20 +24,22 @@ Site statique de petits outils qui traitent les fichiers dans le navigateur. Rie
 
 ## Ajouter un outil
 
-1. Créer `src/tools/<slug>/` :
-   - `meta.ts` : `ToolMeta` complet (voir `src/tools/types.ts`), `status: 'draft'` tant que l'outil n'est pas fini ;
-   - `Tool.tsx` : îlot Preact ;
-   - `logic.ts` + `logic.test.ts` : fonctions pures testées ;
-   - `worker.ts` si le traitement est lourd (bibliothèques WASM chargées par `import()` dynamique, dans le worker).
-2. Créer `src/pages/<slug>.astro` sur le modèle de `heic-en-jpg.astro` (`ToolLayout`, `client:load`, aide et FAQ dans le slot `help`).
-3. Ajouter `e2e/<slug>.spec.ts` : cas nominal avec fixture, `guardNetwork(...).assertClean()`, cas d'erreur. Ajouter la page à `e2e/site.spec.ts` (accessibilité).
-4. Lister les nouvelles bibliothèques dans `src/pages/licences.astro`.
+1. `pnpm new-tool <slug> "<Titre>" <catégorie>` crée, en statut `draft` :
+   - `src/tools/<slug>/` : `meta.ts`, `Tool.tsx` (îlot Preact), `logic.ts` + `logic.test.ts` (fonctions pures), `worker.ts` (traitement lourd) ;
+   - `src/pages/<slug>.astro` (aide et FAQ dans le slot `help`) ;
+   - `e2e/<slug>.spec.ts` (chargement, accessibilité, aucune requête externe, et un `test.fixme` à écrire).
+2. Pour un outil « fichiers en entrée, fichiers en sortie », garder la structure du squelette : `Dropzone`, `ResultList`, `useFileJobs` et `serveJobs` gèrent la file un fichier à la fois, les plantages et délais du worker, les téléchargements et le ZIP. Le worker ne contient que le traitement ; les bibliothèques lourdes s'y chargent par `import()` dynamique.
+3. Écrire la logique et ses tests, puis le test e2e nominal avec une fixture synthétique dans `fixtures/` (générée par script, comme `scripts/make-fixtures.mjs`), `guardNetwork(...).assertClean()` et un cas d'erreur. Retirer le `test.fixme`.
+4. Lister les nouvelles bibliothèques dans `src/pages/licences.astro`. Une bibliothèque LGPL se sert sans passer par Vite, comme libheif (`scripts/copy-vendor.mjs`, `public/vendor/`).
 5. Contrôler sur le simulateur iPhone (`xcrun simctl`) si l'outil traite des images ou des PDF.
-6. Passer `status: 'live'`. L'accueil, le sitemap et les catégories se mettent à jour seuls : ne jamais committer d'index généré.
+6. Passer `status: 'live'` et mettre à jour `docs/backlog.md`. L'accueil, le sitemap et le contrôle d'accessibilité de toutes les pages suivent seuls.
+
+Un brouillon n'apparaît ni sur l'accueil ni dans le sitemap en production ; sa page reste accessible par son adresse, en `noindex`, ce qui permet de la tester sur l'aperçu de PR. `src/tools/registry.test.ts` vérifie que chaque dossier d'outil a son slug, sa page, son test e2e et ses tests de logique.
 
 ## Code partagé et travail en parallèle
 
 - Un outil ne dépend que de `src/lib/` et `src/components/`, jamais d'un autre outil.
+- Déjà partagé : `src/lib/files.ts` (noms, extensions, ZIP, téléchargement, détection iPhone/iPad), `src/lib/jobs.ts` et `src/lib/job-host.ts` (traitements en worker), `src/lib/useFileJobs.ts`, `src/components/Dropzone.tsx`, `src/components/ResultList.tsx`.
 - Pas d'abstraction anticipée : un code reste dans l'outil qui l'utilise et n'est extrait dans `src/lib/` qu'au deuxième usage.
 - Une extraction vers `src/lib/` passe par une branche `lib/<sujet>` courte, fusionnée avant les branches d'outils, qui se rebasent ensuite. Jamais deux branches qui modifient `src/lib/` en même temps.
 - Ajout de dépendance : PR courte ; après rebase, régénérer le lockfile avec `pnpm install` plutôt que de résoudre le conflit à la main.
@@ -44,5 +48,6 @@ Site statique de petits outils qui traitent les fichiers dans le navigateur. Rie
 ## Git et déploiement
 
 - Branches : `tool/<slug>`, `lib/<sujet>`, `fix/<sujet>`. PR vers `main`, squash merge, commits conventionnels.
-- La CI (`.github/workflows/ci.yml`) construit, teste, publie un aperçu par PR (`wrangler versions upload`) et déploie `main` sur `outils.cavdar.dev` (`wrangler deploy`).
+- `main` est protégée : PR obligatoire, job `check` vert, squash uniquement.
+- La CI (`.github/workflows/ci.yml`) construit, teste, publie un aperçu par PR (`wrangler versions upload`, lien dans le résumé du job), déploie `main` sur `outils.cavdar.dev` (`wrangler deploy`) puis rejoue les tests sur le site en ligne (job `smoke`).
 - Retour arrière : `pnpm exec wrangler rollback`.

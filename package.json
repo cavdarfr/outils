@@ -10,7 +10,9 @@
     "test": "vitest run",
     "check": "astro check && vitest run && pnpm build",
     "e2e": "playwright test",
-    "vendor": "node scripts/copy-vendor.mjs"
+    "vendor": "node scripts/copy-vendor.mjs",
+    "e2e:prod": "E2E_BASE_URL=${E2E_BASE_URL:-https://outils.cavdar.dev} playwright test --project=chromium --project=mobile-safari",
+    "new-tool": "node scripts/new-tool.mjs"
   },
   "dependencies": {
     "@astrojs/preact": "^6.1.6",

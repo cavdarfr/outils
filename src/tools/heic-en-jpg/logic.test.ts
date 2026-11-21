@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fitWithin, formatBytes, isHeif, outputName, uniqueNames } from './logic';
+import { fitWithin, isHeif, outputName } from './logic';
 
 function ftyp(major: string, compatible: string[] = []): Uint8Array {
   const size = 16 + compatible.length * 4;
@@ -54,26 +54,6 @@ describe('outputName', () => {
 
   it('ajoute une extension si absente', () => {
     expect(outputName('photo', 'jpeg')).toBe('photo.jpg');
-    expect(outputName('.heic', 'jpeg')).toBe('image.jpg');
-  });
-});
-
-describe('uniqueNames', () => {
-  it('numérote les doublons sans tenir compte de la casse', () => {
-    expect(uniqueNames(['a.jpg', 'A.jpg', 'b.jpg', 'a.jpg'])).toEqual(['a.jpg', 'A (2).jpg', 'b.jpg', 'a (3).jpg']);
-  });
-
-  it('évite les collisions avec des noms déjà suffixés', () => {
-    const names = uniqueNames(['photo.jpg', 'photo.jpg', 'photo (2).jpg']);
-    expect(names).toEqual(['photo.jpg', 'photo (2).jpg', 'photo (2) (2).jpg']);
-    expect(new Set(names.map((n) => n.toLowerCase())).size).toBe(names.length);
-  });
-});
-
-describe('formatBytes', () => {
-  it('formate en français', () => {
-    expect(formatBytes(512)).toBe('512 o');
-    expect(formatBytes(2048)).toBe('2 Ko');
-    expect(formatBytes(3.5 * 1024 * 1024)).toBe('3,5 Mo');
+    expect(outputName('.heic', 'jpeg')).toBe('fichier.jpg');
   });
 });

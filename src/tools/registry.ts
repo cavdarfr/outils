@@ -2,9 +2,12 @@ import type { ToolMeta } from './types';
 
 const modules = import.meta.glob<{ meta: ToolMeta }>('./*/meta.ts', { eager: true });
 
-const showDrafts = !import.meta.env.PROD || import.meta.env.PUBLIC_SHOW_DRAFTS === 'true';
+const showDrafts = !import.meta.env.PROD;
 
-/** Outils publiés, triés par titre. Les brouillons ne sont visibles qu'en développement. */
+/**
+ * Outils listés (accueil, sitemap), triés par titre. Les brouillons n'apparaissent qu'en développement ;
+ * en production leur page reste accessible par son adresse, avec noindex, pour les aperçus de PR.
+ */
 export const tools: ToolMeta[] = Object.values(modules)
   .map((m) => m.meta)
   .filter((t) => t.status === 'live' || showDrafts)
