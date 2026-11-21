@@ -47,16 +47,17 @@ export function outputName(name: string, format: OutputFormat): string {
   return `${base}.${EXTENSION[format]}`;
 }
 
-/** Rend les noms uniques dans une archive : `photo.jpg`, `photo (2).jpg`, … */
+/** Rend les noms uniques dans une archive (sans tenir compte de la casse) : `photo.jpg`, `photo (2).jpg`, … */
 export function uniqueNames(names: string[]): string[] {
-  const seen = new Map<string, number>();
+  const used = new Set<string>();
   return names.map((name) => {
-    const key = name.toLowerCase();
-    const count = (seen.get(key) ?? 0) + 1;
-    seen.set(key, count);
-    if (count === 1) return name;
     const dot = name.lastIndexOf('.');
-    return dot > 0 ? `${name.slice(0, dot)} (${count})${name.slice(dot)}` : `${name} (${count})`;
+    const base = dot > 0 ? name.slice(0, dot) : name;
+    const ext = dot > 0 ? name.slice(dot) : '';
+    let candidate = name;
+    for (let n = 2; used.has(candidate.toLowerCase()); n++) candidate = `${base} (${n})${ext}`;
+    used.add(candidate.toLowerCase());
+    return candidate;
   });
 }
 

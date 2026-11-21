@@ -61,7 +61,7 @@ async function decodeWithLibheif(bytes: Uint8Array, budget: number): Promise<Ima
 
 function tooLarge(width: number, height: number): string {
   const mp = Math.round((width * height) / 1_000_000);
-  return `Image trop grande pour cet appareil (${mp} mégapixels). Choisissez une taille de sortie plus petite ou utilisez un ordinateur.`;
+  return `Image trop grande pour cet appareil (${mp} mégapixels). Utilisez un ordinateur pour cette image.`;
 }
 
 async function decode(file: File, budget: number): Promise<{ bitmap: ImageBitmap; decoder: 'natif' | 'libheif' }> {
@@ -77,8 +77,9 @@ async function decode(file: File, budget: number): Promise<{ bitmap: ImageBitmap
 async function convert(req: ConvertRequest): Promise<ConvertResponse> {
   const { bitmap, decoder } = await decode(req.file, req.pixelBudget);
   try {
+    // Le décodage natif a déjà eu lieu ; ce contrôle évite au moins d'allouer en plus le canvas de sortie.
+    if (bitmap.width * bitmap.height > req.pixelBudget) throw new Error(tooLarge(bitmap.width, bitmap.height));
     const size = fitWithin(bitmap.width, bitmap.height, req.maxSide);
-    if (size.width * size.height > req.pixelBudget) throw new Error(tooLarge(size.width, size.height));
     const canvas = new OffscreenCanvas(size.width, size.height);
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas indisponible dans ce navigateur.');

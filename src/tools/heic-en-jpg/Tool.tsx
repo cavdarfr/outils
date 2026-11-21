@@ -63,18 +63,48 @@ export default function Tool() {
     setItems((list) => list.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   }
 
+  function resetWorker() {
+    workerRef.current?.terminate();
+    workerRef.current = null;
+  }
+
   function runOne(item: Item, opts: Omit<ConvertRequest, 'id' | 'file'>): Promise<void> {
     return new Promise((resolve) => {
-      const worker = getWorker();
       update(item.id, { status: 'cours' });
+      let worker: Worker;
+      try {
+        worker = getWorker();
+      } catch {
+        update(item.id, { status: 'erreur', detail: 'Ce navigateur ne permet pas la conversion (Web Worker indisponible).' });
+        resolve();
+        return;
+      }
+      let timer: ReturnType<typeof setTimeout>;
+      const finish = (patch: Partial<Item>, broken = false) => {
+        clearTimeout(timer);
+        worker.removeEventListener('message', onMessage);
+        worker.removeEventListener('error', onError);
+        worker.removeEventListener('messageerror', onError);
+        // Un worker planté ou bloqué est remplacé : les fichiers suivants repartent d'un état propre.
+        if (broken) resetWorker();
+        update(item.id, patch);
+        resolve();
+      };
+      const onError = (event: Event) => {
+        event.preventDefault();
+        finish({ status: 'erreur', detail: "La conversion s'est arrêtée (mémoire insuffisante ou fichier invalide)." }, true);
+      };
+      timer = setTimeout(
+        () => finish({ status: 'erreur', detail: 'Conversion trop longue, abandonnée. Essayez une taille de sortie plus petite.' }, true),
+        120_000,
+      );
       const onMessage = (event: MessageEvent<ConvertResponse>) => {
         const res = event.data;
         if (res.id !== item.id) return;
-        worker.removeEventListener('message', onMessage);
         if (res.ok) {
           const url = URL.createObjectURL(res.blob);
           urls.current.push(url);
-          update(item.id, {
+          finish({
             status: 'ok',
             blob: res.blob,
             url,
@@ -82,11 +112,12 @@ export default function Tool() {
             detail: `${res.width} × ${res.height} px · ${formatBytes(res.blob.size)}`,
           });
         } else {
-          update(item.id, { status: 'erreur', detail: res.error });
+          finish({ status: 'erreur', detail: res.error });
         }
-        resolve();
       };
       worker.addEventListener('message', onMessage);
+      worker.addEventListener('error', onError);
+      worker.addEventListener('messageerror', onError);
       const request: ConvertRequest = { id: item.id, file: item.file, ...opts };
       worker.postMessage(request);
     });
@@ -99,7 +130,7 @@ export default function Tool() {
     const opts = { format, quality, maxSide, pixelBudget: pixelBudget(isAppleMobile()) };
     // Un fichier à la fois : limite la mémoire utilisée, surtout sur mobile.
     for (const item of added) {
-      queueRef.current = queueRef.current.then(() => runOne(item, opts));
+      queueRef.current = queueRef.current.then(() => runOne(item, opts)).catch(() => undefined);
     }
   }
 

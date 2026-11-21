@@ -22,7 +22,7 @@ export default defineConfig({
         "connect-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",
-        "form-action 'self'",
+        "form-action 'none'",
       ],
       scriptDirective: { resources: ["'self'"] },
       styleDirective: { resources: ["'self'"] },

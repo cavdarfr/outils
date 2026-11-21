@@ -14,7 +14,6 @@ export function guardNetwork(page: Page, baseURL: string) {
     if (new URL(url).origin !== origin) outbound.push(url);
     if (req.method() !== 'GET' && req.method() !== 'HEAD') uploads.push(`${req.method()} ${url}`);
   });
-  page.on('worker', (worker) => worker.url()); // les requêtes des workers passent aussi par page.on('request')
   return {
     async assertClean() {
       const violations = await page.evaluate(() => (window as unknown as { __cspViolations?: string[] }).__cspViolations ?? []);

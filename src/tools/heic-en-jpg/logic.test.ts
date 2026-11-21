@@ -62,6 +62,12 @@ describe('uniqueNames', () => {
   it('numérote les doublons sans tenir compte de la casse', () => {
     expect(uniqueNames(['a.jpg', 'A.jpg', 'b.jpg', 'a.jpg'])).toEqual(['a.jpg', 'A (2).jpg', 'b.jpg', 'a (3).jpg']);
   });
+
+  it('évite les collisions avec des noms déjà suffixés', () => {
+    const names = uniqueNames(['photo.jpg', 'photo.jpg', 'photo (2).jpg']);
+    expect(names).toEqual(['photo.jpg', 'photo (2).jpg', 'photo (2) (2).jpg']);
+    expect(new Set(names.map((n) => n.toLowerCase())).size).toBe(names.length);
+  });
 });
 
 describe('formatBytes', () => {
