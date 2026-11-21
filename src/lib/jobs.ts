@@ -16,12 +16,15 @@ export const JOB_ERRORS = {
   crashed: "Le traitement s'est arrêté (mémoire insuffisante ou fichier invalide).",
   timeout: 'Traitement trop long, abandonné.',
   unsendable: 'Impossible de transmettre ce fichier au module de traitement.',
+  cancelled: 'Traitement annulé.',
 } as const;
 
 export class WorkerJobs<P, R> {
   private worker: Worker | null = null;
   private nextId = 1;
   private queue: Promise<unknown> = Promise.resolve();
+  private disposed = false;
+  private cancelActive: (() => void) | null = null;
 
   constructor(
     private readonly create: () => Worker,
@@ -38,13 +41,24 @@ export class WorkerJobs<P, R> {
     return result;
   }
 
-  terminate(): void {
+  /** Arrête définitivement : le traitement en cours et ceux en attente se terminent en « annulé », sans nouveau worker. */
+  dispose(): void {
+    this.disposed = true;
+    this.cancelActive?.();
+    this.terminate();
+  }
+
+  private terminate(): void {
     this.worker?.terminate();
     this.worker = null;
   }
 
   private runNow(payload: P): Promise<JobResult<R>> {
     return new Promise((resolve) => {
+      if (this.disposed) {
+        resolve({ ok: false, error: JOB_ERRORS.cancelled });
+        return;
+      }
       let worker: Worker;
       try {
         worker = this.worker ??= this.create();
@@ -59,6 +73,7 @@ export class WorkerJobs<P, R> {
       const finish = (result: JobResult<R>, broken = false) => {
         if (settled) return;
         settled = true;
+        this.cancelActive = null;
         clearTimeout(timer);
         worker.removeEventListener('message', onMessage);
         worker.removeEventListener('error', onError);
@@ -77,6 +92,7 @@ export class WorkerJobs<P, R> {
         finish({ ok: false, error: JOB_ERRORS.crashed }, true);
       };
 
+      this.cancelActive = () => finish({ ok: false, error: JOB_ERRORS.cancelled }, true);
       worker.addEventListener('message', onMessage);
       worker.addEventListener('error', onError);
       worker.addEventListener('messageerror', onError);

@@ -33,16 +33,20 @@ export function useFileJobs<P, R>(createWorker: () => Worker, options: { timeout
   const jobs = useRef<WorkerJobs<P, R> | null>(null);
   const nextId = useRef(1);
   const urls = useRef<string[]>([]);
+  const mounted = useRef(true);
 
   useEffect(
     () => () => {
-      jobs.current?.terminate();
+      // Après démontage : plus de traitement, plus de mise à jour d'état, plus de création d'URL.
+      mounted.current = false;
+      jobs.current?.dispose();
       urls.current.forEach((u) => URL.revokeObjectURL(u));
     },
     [],
   );
 
   function update(id: number, patch: Partial<FileItem>) {
+    if (!mounted.current) return;
     setItems((list) => list.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   }
 
@@ -53,9 +57,17 @@ export function useFileJobs<P, R>(createWorker: () => Worker, options: { timeout
     setItems((list) => [...list, ...added]);
     jobs.current ??= new WorkerJobs<P, R>(createWorker, options.timeoutMs);
     for (const item of added) {
+      let payload: P;
+      try {
+        payload = toPayload(item.file);
+      } catch (error) {
+        update(item.id, { status: 'erreur', detail: message(error) });
+        continue;
+      }
       void jobs.current
-        .run(toPayload(item.file), () => update(item.id, { status: 'cours' }))
+        .run(payload, () => update(item.id, { status: 'cours' }))
         .then((result) => {
+          if (!mounted.current) return;
           if (!result.ok) {
             update(item.id, { status: 'erreur', detail: result.error });
             return;
@@ -64,7 +76,8 @@ export function useFileJobs<P, R>(createWorker: () => Worker, options: { timeout
           const url = URL.createObjectURL(out.blob);
           urls.current.push(url);
           update(item.id, { status: 'ok', blob: out.blob, name: out.name, url, detail: out.detail });
-        });
+        })
+        .catch((error: unknown) => update(item.id, { status: 'erreur', detail: message(error) }));
     }
   }
 
@@ -94,4 +107,8 @@ export function useFileJobs<P, R>(createWorker: () => Worker, options: { timeout
     busy: items.some((it) => it.status === 'attente' || it.status === 'cours'),
     doneCount: items.filter((it) => it.status === 'ok').length,
   };
+}
+
+function message(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

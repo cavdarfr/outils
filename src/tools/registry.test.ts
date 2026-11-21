@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { ToolMeta } from './types';
 
@@ -12,5 +12,9 @@ describe('structure des outils', () => {
     expect(existsSync(`e2e/${dir}.spec.ts`)).toBe(true);
     expect(existsSync(`src/tools/${dir}/logic.test.ts`)).toBe(true);
     expect(meta.description.length).toBeLessThanOrEqual(200);
+    if (meta.status === 'live') {
+      // Un outil publié a son parcours nominal testé : plus de test.fixme laissé par le générateur.
+      expect(readFileSync(`e2e/${dir}.spec.ts`, 'utf8')).not.toContain('test.fixme');
+    }
   });
 });

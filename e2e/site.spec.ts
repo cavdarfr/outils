@@ -7,7 +7,9 @@ test('accessibilité de toutes les pages du sitemap', async ({ page, request, ba
   const paths = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]!).pathname);
   expect(paths.length).toBeGreaterThan(4);
   for (const path of paths) {
-    await page.goto(new URL(path, baseURL).href);
+    const response = await page.goto(new URL(path, baseURL).href);
+    expect(response?.status(), path).toBe(200);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', new URL(path, 'https://outils.cavdar.dev').href);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.map((v) => `${path} ${v.id}: ${v.help}`)).toEqual([]);
   }

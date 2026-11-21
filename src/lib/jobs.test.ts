@@ -109,6 +109,21 @@ describe('WorkerJobs', () => {
     expect(maxPending).toBe(1);
   });
 
+  it('dispose annule le traitement en cours et la file, sans créer de nouveau worker', async () => {
+    const { create, created } = factory(() => {});
+    const jobs = new WorkerJobs<number, number>(create);
+    const first = jobs.run(1);
+    const second = jobs.run(2);
+    await Promise.resolve();
+    await Promise.resolve();
+    jobs.dispose();
+    expect(await first).toEqual({ ok: false, error: JOB_ERRORS.cancelled });
+    expect(await second).toEqual({ ok: false, error: JOB_ERRORS.cancelled });
+    expect(await jobs.run(3)).toEqual({ ok: false, error: JOB_ERRORS.cancelled });
+    expect(created).toHaveLength(1);
+    expect(created[0]!.terminated).toBe(true);
+  });
+
   it('signale un navigateur sans Web Worker', async () => {
     const jobs = new WorkerJobs<number, number>(() => {
       throw new Error('pas de worker');

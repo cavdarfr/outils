@@ -2,11 +2,13 @@
 // Usage : node scripts/new-tool.mjs <slug> "<Titre court>" <categorie>
 //   catégories : images | pdf | documents | social | pratique
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 const [slug, title, category] = process.argv.slice(2);
 const categories = ['images', 'pdf', 'documents', 'social', 'pratique'];
 
-if (!slug || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || !title || !categories.includes(category)) {
+// eslint-disable-next-line no-control-regex
+if (!slug || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || !title || /[\u0000-\u001f\u007f]/.test(title) || !categories.includes(category)) {
   console.error('Usage : node scripts/new-tool.mjs <slug-en-minuscules> "<Titre court>" <' + categories.join('|') + '>');
   process.exit(1);
 }
@@ -29,11 +31,13 @@ for (const target of Object.keys(files)) {
   }
 }
 
-mkdirSync(toolDir, { recursive: true });
 for (const [target, template] of Object.entries(files)) {
+  mkdirSync(dirname(target), { recursive: true });
   const content = readFileSync(`scripts/templates/${template}.tmpl`, 'utf8')
     .replaceAll('__SLUG__', slug)
-    .replaceAll('__TITLE__', title.replaceAll("'", "\\'"))
+    // Littéraux JavaScript complets : aucun caractère du titre ne peut sortir de la chaîne.
+    .replaceAll('__TITLE_JS__', JSON.stringify(title))
+    .replaceAll('__SEO_TITLE_JS__', JSON.stringify(`${title} gratuitement, sans envoi de fichier`))
     .replaceAll('__CATEGORY__', category);
   writeFileSync(target, content);
   console.log(`créé  ${target}`);
