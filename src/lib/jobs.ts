@@ -31,10 +31,10 @@ export class WorkerJobs<P, R> {
     private readonly timeoutMs = 120_000,
   ) {}
 
-  /** Ajoute un traitement à la file. `onStart` est appelé quand il commence réellement. */
+  /** Ajoute un traitement à la file. `onStart` est appelé quand il commence réellement, jamais après `dispose()`. */
   run(payload: P, onStart?: () => void): Promise<JobResult<R>> {
     const result = this.queue.then(() => {
-      onStart?.();
+      if (!this.disposed) onStart?.();
       return this.runNow(payload);
     });
     this.queue = result.catch(() => undefined);

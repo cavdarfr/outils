@@ -124,6 +124,20 @@ describe('WorkerJobs', () => {
     expect(created[0]!.terminated).toBe(true);
   });
 
+  it("n'appelle pas onStart pour les traitements annulés par dispose", async () => {
+    const started: number[] = [];
+    const { create, created } = factory(() => {});
+    const jobs = new WorkerJobs<number, number>(create);
+    const first = jobs.run(1, () => started.push(1));
+    const second = jobs.run(2, () => started.push(2));
+    await Promise.resolve();
+    await Promise.resolve();
+    jobs.dispose();
+    await Promise.all([first, second]);
+    expect(started).toEqual([1]);
+    expect(created).toHaveLength(1);
+  });
+
   it('signale un navigateur sans Web Worker', async () => {
     const jobs = new WorkerJobs<number, number>(() => {
       throw new Error('pas de worker');

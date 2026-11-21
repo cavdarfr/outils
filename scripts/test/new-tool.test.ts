@@ -25,6 +25,15 @@ describe('new-tool', () => {
     expect(source).toContain(JSON.stringify(title));
   });
 
+  it('insère tel quel un titre contenant des motifs de remplacement ou des marqueurs', async () => {
+    const title = 'Prix $& $1 $$ et __CATEGORY__ __TITLE_JS__';
+    run('outil-motifs', title, 'pratique');
+    const { meta } = (await import(join(dir, 'src/tools/outil-motifs/meta.ts'))) as { meta: { title: string; seoTitle: string; category: string } };
+    expect(meta.title).toBe(title);
+    expect(meta.seoTitle).toBe(`${title} gratuitement, sans envoi de fichier`);
+    expect(meta.category).toBe('pratique');
+  });
+
   it('refuse un slug invalide, un titre avec saut de ligne et une catégorie inconnue', () => {
     expect(() => run('Mauvais Slug', 'Titre', 'pratique')).toThrow();
     expect(() => run('bon-slug', 'Ligne 1\nLigne 2', 'pratique')).toThrow();

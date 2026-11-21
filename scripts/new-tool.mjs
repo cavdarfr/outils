@@ -14,6 +14,13 @@ if (!slug || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) || !title || /[\u0000-\u001f
 }
 
 const toolDir = `src/tools/${slug}`;
+const vars = {
+  SLUG: slug,
+  // Littéraux JavaScript complets : aucun caractère du titre ne peut sortir de la chaîne.
+  TITLE_JS: JSON.stringify(title),
+  SEO_TITLE_JS: JSON.stringify(`${title} gratuitement, sans envoi de fichier`),
+  CATEGORY: category,
+};
 const files = {
   [`${toolDir}/meta.ts`]: 'meta.ts',
   [`${toolDir}/logic.ts`]: 'logic.ts',
@@ -33,12 +40,12 @@ for (const target of Object.keys(files)) {
 
 for (const [target, template] of Object.entries(files)) {
   mkdirSync(dirname(target), { recursive: true });
-  const content = readFileSync(`scripts/templates/${template}.tmpl`, 'utf8')
-    .replaceAll('__SLUG__', slug)
-    // Littéraux JavaScript complets : aucun caractère du titre ne peut sortir de la chaîne.
-    .replaceAll('__TITLE_JS__', JSON.stringify(title))
-    .replaceAll('__SEO_TITLE_JS__', JSON.stringify(`${title} gratuitement, sans envoi de fichier`))
-    .replaceAll('__CATEGORY__', category);
+  // Une seule passe, remplacement par fonction : le texte inséré n'est jamais réinterprété
+  // (ni motifs `$&` de replace, ni marqueurs __…__ contenus dans le titre).
+  const content = readFileSync(`scripts/templates/${template}.tmpl`, 'utf8').replace(
+    /__(SLUG|TITLE_JS|SEO_TITLE_JS|CATEGORY)__/g,
+    (_, key) => vars[key],
+  );
   writeFileSync(target, content);
   console.log(`créé  ${target}`);
 }
