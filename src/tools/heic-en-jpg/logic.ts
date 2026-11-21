@@ -1,3 +1,5 @@
+import { replaceExtension } from '../../lib/files';
+
 export type OutputFormat = 'jpeg' | 'png';
 
 export const MIME: Record<OutputFormat, string> = {
@@ -41,24 +43,9 @@ export function fitWithin(width: number, height: number, maxSide: number | null)
   };
 }
 
-/** Remplace l'extension du fichier par celle du format de sortie. */
+/** Nom du fichier converti : même nom, extension du format de sortie. */
 export function outputName(name: string, format: OutputFormat): string {
-  const base = name.replace(/\.[^./\\]+$/, '') || 'image';
-  return `${base}.${EXTENSION[format]}`;
-}
-
-/** Rend les noms uniques dans une archive (sans tenir compte de la casse) : `photo.jpg`, `photo (2).jpg`, … */
-export function uniqueNames(names: string[]): string[] {
-  const used = new Set<string>();
-  return names.map((name) => {
-    const dot = name.lastIndexOf('.');
-    const base = dot > 0 ? name.slice(0, dot) : name;
-    const ext = dot > 0 ? name.slice(dot) : '';
-    let candidate = name;
-    for (let n = 2; used.has(candidate.toLowerCase()); n++) candidate = `${base} (${n})${ext}`;
-    used.add(candidate.toLowerCase());
-    return candidate;
-  });
+  return replaceExtension(name, EXTENSION[format]);
 }
 
 /**
@@ -67,10 +54,4 @@ export function uniqueNames(names: string[]): string[] {
  */
 export function pixelBudget(isAppleMobile: boolean): number {
   return isAppleMobile ? 50_000_000 : 120_000_000;
-}
-
-export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} o`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`;
-  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} Mo`;
 }

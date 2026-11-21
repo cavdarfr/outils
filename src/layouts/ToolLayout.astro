@@ -9,7 +9,7 @@ interface Props {
 const tool = getTool(Astro.props.slug);
 ---
 
-<Base title={tool.seoTitle} description={tool.description} path={`/${tool.slug}`}>
+<Base title={tool.seoTitle} description={tool.description} path={`/${tool.slug}`} noindex={tool.status === 'draft'}>
   <nav class="crumbs" aria-label="Fil d'Ariane"><a href="/">Tous les outils</a></nav>
   <h1>{tool.title}</h1>
   <p class="lead">{tool.description}</p>

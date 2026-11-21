@@ -1,0 +1,17 @@
+/// <reference lib="webworker" />
+import { serveJobs } from '../../lib/job-host';
+
+export interface Payload {
+  file: File;
+}
+
+export interface Result {
+  blob: Blob;
+}
+
+// Traitement lourd, hors du fil principal. Les bibliothèques volumineuses se chargent ici par import() dynamique.
+async function process({ file }: Payload): Promise<Result> {
+  return { blob: file };
+}
+
+serveJobs(process);

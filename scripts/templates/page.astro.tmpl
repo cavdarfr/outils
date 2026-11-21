@@ -1,0 +1,17 @@
+---
+import ToolLayout from '../layouts/ToolLayout.astro';
+import Tool from '../tools/__SLUG__/Tool';
+---
+
+<ToolLayout slug="__SLUG__">
+  <Tool client:load />
+  <Fragment slot="help">
+    <h2>Comment ça marche</h2>
+    <ol>
+      <li>À rédiger.</li>
+    </ol>
+    <h2>Questions fréquentes</h2>
+    <h3>Mes fichiers sont-ils envoyés sur un serveur ?</h3>
+    <p>Non. Le traitement se fait dans votre navigateur, sur votre appareil.</p>
+  </Fragment>
+</ToolLayout>

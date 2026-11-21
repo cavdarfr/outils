@@ -1,9 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const port = Number(process.env.E2E_PORT ?? 8788);
-const baseURL = `http://127.0.0.1:${port}`;
+// E2E_BASE_URL : tester un site déjà en ligne (production, aperçu) au lieu du build local.
+const remote = process.env.E2E_BASE_URL;
+const baseURL = remote ?? `http://127.0.0.1:${port}`;
 
-// Le site construit (dist/) est servi par wrangler, comme en production : mêmes en-têtes (_headers), même 404.
+// En local, le site construit (dist/) est servi par wrangler, comme en production : mêmes en-têtes (_headers), même 404.
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
@@ -11,12 +13,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: { baseURL, trace: 'retain-on-failure' },
-  webServer: {
-    command: `pnpm exec wrangler dev --ip 127.0.0.1 --port ${port} --log-level warn`,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
-  },
+  webServer: remote
+    ? undefined
+    : {
+        command: `pnpm exec wrangler dev --ip 127.0.0.1 --port ${port} --log-level warn`,
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 60_000,
+      },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

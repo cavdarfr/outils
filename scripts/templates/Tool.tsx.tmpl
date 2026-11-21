@@ -1,0 +1,33 @@
+import Dropzone from '../../components/Dropzone';
+import ResultList from '../../components/ResultList';
+import { formatBytes } from '../../lib/files';
+import { useFileJobs } from '../../lib/useFileJobs';
+import type { Payload, Result } from './worker';
+
+const createWorker = () => new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+
+export default function Tool() {
+  const jobs = useFileJobs<Payload, Result>(createWorker);
+
+  function addFiles(files: File[]) {
+    jobs.process(
+      files,
+      (file) => ({ file }),
+      (file, res) => ({ blob: res.blob, name: file.name, detail: formatBytes(res.blob.size) }),
+    );
+  }
+
+  return (
+    <div class="tool">
+      <Dropzone onFiles={addFiles} accept="*/*" hint="ou touchez pour choisir" />
+      <ResultList
+        items={jobs.items}
+        doneCount={jobs.doneCount}
+        busy={jobs.busy}
+        zipping={jobs.zipping}
+        onDownloadAll={() => jobs.downloadAll('__SLUG__.zip')}
+        onClear={jobs.clear}
+      />
+    </div>
+  );
+}

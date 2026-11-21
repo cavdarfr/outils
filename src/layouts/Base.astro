@@ -6,9 +6,11 @@ interface Props {
   description: string;
   /** Chemin canonique, par exemple « /heic-en-jpg ». */
   path: string;
+  /** Page à ne pas indexer (outil en brouillon). */
+  noindex?: boolean;
 }
 
-const { title, description, path } = Astro.props;
+const { title, description, path, noindex = false } = Astro.props;
 const canonical = new URL(path, Astro.site).href;
 const repo = 'https://github.com/cavdarfr/outils';
 ---
@@ -21,6 +23,7 @@ const repo = 'https://github.com/cavdarfr/outils';
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#141a16" media="(prefers-color-scheme: dark)" />
